@@ -133,14 +133,14 @@ function RealityCheckerApp() {
       <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col gap-8 py-12">
 
         {/* Header */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="relative h-14 w-14 flex items-center justify-center mb-1">
+        <div className="flex flex-col items-center text-center gap-3 px-4">
+          <div className="relative h-14 w-14 flex items-center justify-center mb-1 shrink-0">
             <div className="absolute inset-0 rounded-2xl bg-primary/10 blur-md" />
             <div className="relative h-14 w-14 bg-card border border-white/8 rounded-2xl flex items-center justify-center shadow-lg shadow-black/40">
               <Terminal className="w-6 h-6 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-tight w-full">
             Reality Checker AI
           </h1>
           <p className="text-sm text-muted-foreground/80 max-w-sm mx-auto leading-relaxed">
