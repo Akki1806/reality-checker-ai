@@ -15,6 +15,50 @@ import { cn } from "@/lib/utils";
 
 const queryClient = new QueryClient();
 
+function getScoreColor(score: number) {
+  if (score <= 30) return { text: "text-red-500", bg: "bg-red-500", track: "bg-red-500/20", label: "text-red-400" };
+  if (score <= 60) return { text: "text-amber-400", bg: "bg-amber-400", track: "bg-amber-400/20", label: "text-amber-400" };
+  return { text: "text-emerald-400", bg: "bg-emerald-400", track: "bg-emerald-400/20", label: "text-emerald-400" };
+}
+
+function getFeasibilityBadgeStyle(feasibility: string) {
+  switch (feasibility) {
+    case "Realistic":
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    case "Risky":
+      return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    case "Unrealistic":
+      return "bg-red-500/10 text-red-400 border-red-500/20";
+    default:
+      return "bg-muted text-muted-foreground border-border";
+  }
+}
+
+function ScoreDisplay({ score }: { score: number }) {
+  const colors = getScoreColor(score);
+  const pct = score;
+
+  return (
+    <div className="flex flex-col items-center gap-3 py-4" data-testid="display-reality-score">
+      <div className={cn("text-7xl font-bold tabular-nums tracking-tighter font-mono", colors.text)}>
+        {score}
+      </div>
+      <div className="text-xs text-muted-foreground font-mono uppercase tracking-widest">Reality Score</div>
+      <div className="w-full max-w-xs h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn("h-full rounded-full transition-all duration-700", colors.bg)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex justify-between w-full max-w-xs text-xs font-mono text-muted-foreground/60">
+        <span className="text-red-500/60">0</span>
+        <span className="text-amber-400/60">50</span>
+        <span className="text-emerald-400/60">100</span>
+      </div>
+    </div>
+  );
+}
+
 function RealityCheckerApp() {
   const [goalText, setGoalText] = useState("");
   const [isBrutalMode, setIsBrutalMode] = useState(false);
@@ -23,29 +67,13 @@ function RealityCheckerApp() {
   const handleCheckReality = (e: React.FormEvent) => {
     e.preventDefault();
     if (!goalText.trim()) return;
-
-    mutation.mutate({
-      data: { goal: goalText, brutalHonesty: isBrutalMode }
-    });
-  };
-
-  const getFeasibilityBadgeVariant = (feasibility: string) => {
-    switch (feasibility) {
-      case "Realistic":
-        return "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20";
-      case "Risky":
-        return "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20";
-      case "Unrealistic":
-        return "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20";
-      default:
-        return "bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 border-gray-500/20";
-    }
+    mutation.mutate({ data: { goal: goalText, brutalHonesty: isBrutalMode } });
   };
 
   return (
     <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-background text-foreground font-sans dark selection:bg-primary/30">
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-8">
-        
+
         {/* Header */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="h-12 w-12 bg-card border border-border rounded-xl flex items-center justify-center mb-2 shadow-sm">
@@ -68,7 +96,7 @@ function RealityCheckerApp() {
                 <Input
                   id="goal-input"
                   data-testid="input-goal"
-                  placeholder="Enter your goal... (e.g. build a startup in 2 weeks)"
+                  placeholder="Enter your goal..."
                   value={goalText}
                   onChange={(e) => setGoalText(e.target.value)}
                   className="font-mono text-sm min-h-[50px] bg-background/50 focus-visible:ring-primary/50"
@@ -121,7 +149,7 @@ function RealityCheckerApp() {
             <div>
               <p className="font-semibold mb-1">Analysis Failed</p>
               <p className="text-destructive/80">
-                {mutation.error?.error || "An unexpected error occurred while evaluating your goal. Please try again."}
+                {(mutation.error as { error?: string } | null)?.error || "An unexpected error occurred while evaluating your goal. Please try again."}
               </p>
             </div>
           </div>
@@ -129,28 +157,36 @@ function RealityCheckerApp() {
 
         {/* Result Card */}
         {mutation.isSuccess && mutation.data && (
-          <Card 
+          <Card
             data-testid="card-result"
             className="border-border shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden"
           >
             <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
+
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-muted-foreground font-mono">Analysis Result</CardTitle>
-                <Badge 
+                <Badge
                   data-testid={`badge-feasibility-${mutation.data.feasibility.toLowerCase()}`}
-                  variant="outline" 
-                  className={cn("font-mono px-3 py-1 text-sm border", getFeasibilityBadgeVariant(mutation.data.feasibility))}
+                  variant="outline"
+                  className={cn("font-mono px-3 py-1 text-sm border", getFeasibilityBadgeStyle(mutation.data.feasibility))}
                 >
                   {mutation.data.feasibility.toUpperCase()}
                 </Badge>
               </div>
               <CardDescription className="sr-only">Analysis details</CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
-              
+
+              {/* Score */}
+              <div className="border border-border rounded-lg bg-background/40 px-6 py-2">
+                <ScoreDisplay score={mutation.data.realityScore} />
+              </div>
+
+              {/* Reasoning */}
               <div className="space-y-2" data-testid="section-reasoning">
-                <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-2">
+                <h3 className="text-xs font-semibold tracking-widest text-muted-foreground uppercase flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
                   Reasoning
                 </h3>
@@ -159,8 +195,9 @@ function RealityCheckerApp() {
                 </div>
               </div>
 
+              {/* Plan */}
               <div className="space-y-2" data-testid="section-plan">
-                <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase flex items-center gap-2">
+                <h3 className="text-xs font-semibold tracking-widest text-muted-foreground uppercase flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
                   Suggested Plan
                 </h3>

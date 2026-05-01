@@ -31,6 +31,12 @@ export const AnalysisResultFeasibility = {
 export interface AnalysisResult {
   /** The feasibility rating of the goal */
   feasibility: AnalysisResultFeasibility;
+  /**
+   * Numeric score from 0–100 (0–30 Unrealistic, 31–60 Risky, 61–100 Realistic)
+   * @minimum 0
+   * @maximum 100
+   */
+  realityScore: number;
   /** Reasoning behind the feasibility rating */
   reason: string;
   /** A suggested realistic plan */

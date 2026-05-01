@@ -85,6 +85,11 @@ components:
           type: string
           enum: [Realistic, Risky, Unrealistic]
           description: The feasibility rating of the goal
+        realityScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Numeric score from 0–100 (0–30 Unrealistic, 31–60 Risky, 61–100 Realistic)
         reason:
           type: string
           description: Reasoning behind the feasibility rating
@@ -93,6 +98,7 @@ components:
           description: A suggested realistic plan
       required:
         - feasibility
+        - realityScore
         - reason
         - plan
     ErrorResponse:

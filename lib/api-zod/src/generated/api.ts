@@ -24,10 +24,20 @@ export const AnalyzeGoalBody = zod.object({
   brutalHonesty: zod.boolean().describe("Whether to apply brutal honesty mode"),
 });
 
+export const analyzeGoalResponseRealityScoreMin = 0;
+export const analyzeGoalResponseRealityScoreMax = 100;
+
 export const AnalyzeGoalResponse = zod.object({
   feasibility: zod
     .enum(["Realistic", "Risky", "Unrealistic"])
     .describe("The feasibility rating of the goal"),
+  realityScore: zod
+    .number()
+    .min(analyzeGoalResponseRealityScoreMin)
+    .max(analyzeGoalResponseRealityScoreMax)
+    .describe(
+      "Numeric score from 0–100 (0–30 Unrealistic, 31–60 Risky, 61–100 Realistic)",
+    ),
   reason: zod.string().describe("Reasoning behind the feasibility rating"),
   plan: zod.string().describe("A suggested realistic plan"),
 });

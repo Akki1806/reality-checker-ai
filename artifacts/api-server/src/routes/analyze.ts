@@ -22,13 +22,21 @@ Rules:
 - Clearly explain if unrealistic
 - Suggest a better plan
 
+Scoring:
+- Assign a realityScore from 0 to 100 based on how achievable the goal is
+- 0–30 → Unrealistic (impossible timeline, magical thinking, no basis in reality)
+- 31–60 → Risky (achievable but requires exceptional execution, high failure rate)
+- 61–100 → Realistic (well-scoped, achievable with consistent effort)
+- The feasibility field must match the score range exactly
+
 Tone:
-- If brutalHonesty = true → harsh and direct
-- If false → balanced
+- If brutalHonesty = true → harsh and direct, no softening
+- If false → balanced and constructive
 
 Return ONLY valid JSON with no markdown, no code fences, no extra text:
 {
   "feasibility": "Realistic" or "Risky" or "Unrealistic",
+  "realityScore": 0-100,
   "reason": "...",
   "plan": "..."
 }`;
@@ -53,7 +61,7 @@ Return ONLY valid JSON with no markdown, no code fences, no extra text:
       return;
     }
 
-    let parsed: { feasibility: string; reason: string; plan: string };
+    let parsed: { feasibility: string; realityScore: unknown; reason: string; plan: string };
     try {
       const cleaned = block.text
         .replace(/^```(?:json)?\s*/i, "")
@@ -67,11 +75,15 @@ Return ONLY valid JSON with no markdown, no code fences, no extra text:
     }
 
     const validFeasibility = ["Realistic", "Risky", "Unrealistic"];
+    const score = Number(parsed.realityScore);
     if (
       !parsed.feasibility ||
       !validFeasibility.includes(parsed.feasibility) ||
       typeof parsed.reason !== "string" ||
-      typeof parsed.plan !== "string"
+      typeof parsed.plan !== "string" ||
+      !Number.isFinite(score) ||
+      score < 0 ||
+      score > 100
     ) {
       req.log.error({ parsed }, "Claude returned invalid shape");
       res.status(500).json({ error: "AI returned an unexpected response structure" });
@@ -80,6 +92,7 @@ Return ONLY valid JSON with no markdown, no code fences, no extra text:
 
     res.json({
       feasibility: parsed.feasibility as "Realistic" | "Risky" | "Unrealistic",
+      realityScore: Math.round(score),
       reason: parsed.reason,
       plan: parsed.plan,
     });
