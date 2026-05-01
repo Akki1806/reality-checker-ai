@@ -26,8 +26,8 @@ Instructions:
    - 31–60 → Risky (achievable but high failure rate, needs exceptional execution)
    - 61–100 → Realistic (well-scoped, achievable with consistent effort)
 3. Write scoreReason: one short sentence (max 20 words) explaining the exact score
-4. Write reason: exactly 2–3 key factors as a single structured paragraph — no bullet points, no filler
-5. Write plan: exactly 3–4 bullet points, each under 20 words, sharp and immediately actionable
+4. Write reason: exactly 2–3 bullet points as a JSON array — each under 20 words, one key factor per point, no filler
+5. Write plan: exactly 3–4 bullet points as a JSON array — each under 20 words, sharp and immediately actionable
 
 Return ONLY valid JSON — no markdown, no code fences, no extra text:
 {
@@ -35,7 +35,7 @@ Return ONLY valid JSON — no markdown, no code fences, no extra text:
   "realityScore": 0-100,
   "scoreReason": "...",
   "category": "money" | "fitness" | "career" | "business" | "other",
-  "reason": "...",
+  "reason": ["...", "...", "..."],
   "plan": ["...", "...", "...", "..."]
 }`;
 
@@ -64,7 +64,7 @@ Return ONLY valid JSON — no markdown, no code fences, no extra text:
       realityScore: unknown;
       scoreReason: unknown;
       category: unknown;
-      reason: string;
+      reason: unknown;
       plan: unknown;
     };
 
@@ -84,14 +84,16 @@ Return ONLY valid JSON — no markdown, no code fences, no extra text:
     const validCategories = ["money", "fitness", "career", "business", "other"];
     const score = Number(parsed.realityScore);
 
+    const isStringArray = (v: unknown) =>
+      Array.isArray(v) && v.length > 0 && (v as unknown[]).every((p) => typeof p === "string");
+
     if (
       !validFeasibility.includes(parsed.feasibility) ||
       !Number.isFinite(score) || score < 0 || score > 100 ||
       typeof parsed.scoreReason !== "string" ||
       !validCategories.includes(parsed.category as string) ||
-      typeof parsed.reason !== "string" ||
-      !Array.isArray(parsed.plan) || parsed.plan.length === 0 ||
-      !(parsed.plan as unknown[]).every((p) => typeof p === "string")
+      !isStringArray(parsed.reason) ||
+      !isStringArray(parsed.plan)
     ) {
       req.log.error({ parsed }, "Claude returned invalid shape");
       res.status(500).json({ error: "AI returned an unexpected response structure" });
@@ -103,7 +105,7 @@ Return ONLY valid JSON — no markdown, no code fences, no extra text:
       realityScore: Math.round(score),
       scoreReason: parsed.scoreReason as string,
       category: parsed.category as string,
-      reason: parsed.reason,
+      reason: (parsed.reason as string[]).slice(0, 3),
       plan: (parsed.plan as string[]).slice(0, 4),
     });
   } catch (err) {

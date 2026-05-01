@@ -116,10 +116,13 @@ function RealityCheckerApp() {
   const handleShare = async () => {
     if (!mutation.data) return;
     const { feasibility, realityScore, scoreReason, reason, plan } = mutation.data;
+    const reasonText = Array.isArray(reason)
+      ? reason.map((r) => `• ${r}`).join("\n")
+      : reason;
     const planText = Array.isArray(plan)
       ? plan.map((p, i) => `${i + 1}. ${p}`).join("\n")
       : plan;
-    const text = `Reality Check AI Result:\n\nGoal: ${goalText}\n\nScore: ${realityScore}/100 — ${scoreReason}\nFeasibility: ${feasibility}\n\nReason:\n${reason}\n\nPlan:\n${planText}`;
+    const text = `Reality Check AI Result:\n\nGoal: ${goalText}\n\nScore: ${realityScore}/100 — ${scoreReason}\nFeasibility: ${feasibility}\n\nKey Factors:\n${reasonText}\n\nPlan:\n${planText}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -306,8 +309,17 @@ function RealityCheckerApp() {
                   <span className="w-1 h-1 rounded-full bg-primary/40" />
                   Key Factors
                 </h3>
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5 font-mono text-sm leading-relaxed text-foreground/80">
-                  {mutation.data.reason}
+                <div className="rounded-xl bg-white/[0.03] border border-white/5 overflow-hidden">
+                  {(Array.isArray(mutation.data.reason) ? mutation.data.reason : [mutation.data.reason as unknown as string]).map((point, i) => (
+                    <div
+                      key={i}
+                      data-testid={`reason-point-${i}`}
+                      className="flex items-start gap-3 px-4 py-3 border-b border-white/4 last:border-0"
+                    >
+                      <span className="shrink-0 mt-[0.4rem] w-1.5 h-1.5 rounded-full bg-primary/50" />
+                      <span className="font-mono text-sm text-foreground/80 leading-relaxed">{point}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 

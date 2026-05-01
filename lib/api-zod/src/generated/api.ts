@@ -27,6 +27,8 @@ export const AnalyzeGoalBody = zod.object({
 export const analyzeGoalResponseRealityScoreMin = 0;
 export const analyzeGoalResponseRealityScoreMax = 100;
 
+export const analyzeGoalResponseReasonMax = 3;
+
 export const analyzeGoalResponsePlanMax = 4;
 
 export const AnalyzeGoalResponse = zod.object({
@@ -47,8 +49,9 @@ export const AnalyzeGoalResponse = zod.object({
     .enum(["money", "fitness", "career", "business", "other"])
     .describe("Detected category of the goal"),
   reason: zod
-    .string()
-    .describe("2–3 key factors behind the feasibility rating"),
+    .array(zod.string())
+    .max(analyzeGoalResponseReasonMax)
+    .describe("2–3 key factors behind the feasibility rating as bullet points"),
   plan: zod
     .array(zod.string())
     .max(analyzeGoalResponsePlanMax)

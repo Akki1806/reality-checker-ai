@@ -55,8 +55,11 @@ export interface AnalysisResult {
   scoreReason: string;
   /** Detected category of the goal */
   category: AnalysisResultCategory;
-  /** 2–3 key factors behind the feasibility rating */
-  reason: string;
+  /**
+   * 2–3 key factors behind the feasibility rating as bullet points
+   * @maxItems 3
+   */
+  reason: string[];
   /**
    * Up to 4 concise actionable steps
    * @maxItems 4
