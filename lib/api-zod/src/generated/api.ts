@@ -27,6 +27,8 @@ export const AnalyzeGoalBody = zod.object({
 export const analyzeGoalResponseRealityScoreMin = 0;
 export const analyzeGoalResponseRealityScoreMax = 100;
 
+export const analyzeGoalResponsePlanMax = 4;
+
 export const AnalyzeGoalResponse = zod.object({
   feasibility: zod
     .enum(["Realistic", "Risky", "Unrealistic"])
@@ -38,6 +40,17 @@ export const AnalyzeGoalResponse = zod.object({
     .describe(
       "Numeric score from 0–100 (0–30 Unrealistic, 31–60 Risky, 61–100 Realistic)",
     ),
-  reason: zod.string().describe("Reasoning behind the feasibility rating"),
-  plan: zod.string().describe("A suggested realistic plan"),
+  scoreReason: zod
+    .string()
+    .describe("Short explanation of why this specific score was assigned"),
+  category: zod
+    .enum(["money", "fitness", "career", "business", "other"])
+    .describe("Detected category of the goal"),
+  reason: zod
+    .string()
+    .describe("2–3 key factors behind the feasibility rating"),
+  plan: zod
+    .array(zod.string())
+    .max(analyzeGoalResponsePlanMax)
+    .describe("Up to 4 concise actionable steps"),
 });

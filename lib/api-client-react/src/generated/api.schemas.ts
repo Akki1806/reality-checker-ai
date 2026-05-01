@@ -28,6 +28,20 @@ export const AnalysisResultFeasibility = {
   Unrealistic: "Unrealistic",
 } as const;
 
+/**
+ * Detected category of the goal
+ */
+export type AnalysisResultCategory =
+  (typeof AnalysisResultCategory)[keyof typeof AnalysisResultCategory];
+
+export const AnalysisResultCategory = {
+  money: "money",
+  fitness: "fitness",
+  career: "career",
+  business: "business",
+  other: "other",
+} as const;
+
 export interface AnalysisResult {
   /** The feasibility rating of the goal */
   feasibility: AnalysisResultFeasibility;
@@ -37,10 +51,17 @@ export interface AnalysisResult {
    * @maximum 100
    */
   realityScore: number;
-  /** Reasoning behind the feasibility rating */
+  /** Short explanation of why this specific score was assigned */
+  scoreReason: string;
+  /** Detected category of the goal */
+  category: AnalysisResultCategory;
+  /** 2–3 key factors behind the feasibility rating */
   reason: string;
-  /** A suggested realistic plan */
-  plan: string;
+  /**
+   * Up to 4 concise actionable steps
+   * @maxItems 4
+   */
+  plan: string[];
 }
 
 export interface ErrorResponse {

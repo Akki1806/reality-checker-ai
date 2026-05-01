@@ -90,15 +90,27 @@ components:
           minimum: 0
           maximum: 100
           description: Numeric score from 0–100 (0–30 Unrealistic, 31–60 Risky, 61–100 Realistic)
+        scoreReason:
+          type: string
+          description: Short explanation of why this specific score was assigned
+        category:
+          type: string
+          enum: [money, fitness, career, business, other]
+          description: Detected category of the goal
         reason:
           type: string
-          description: Reasoning behind the feasibility rating
+          description: 2–3 key factors behind the feasibility rating
         plan:
-          type: string
-          description: A suggested realistic plan
+          type: array
+          items:
+            type: string
+          maxItems: 4
+          description: Up to 4 concise actionable steps
       required:
         - feasibility
         - realityScore
+        - scoreReason
+        - category
         - reason
         - plan
     ErrorResponse:
