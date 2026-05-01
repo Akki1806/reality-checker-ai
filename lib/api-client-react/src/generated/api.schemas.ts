@@ -8,3 +8,35 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface AnalyzeGoalBody {
+  /** The user's goal to analyze */
+  goal: string;
+  /** Whether to apply brutal honesty mode */
+  brutalHonesty: boolean;
+}
+
+/**
+ * The feasibility rating of the goal
+ */
+export type AnalysisResultFeasibility =
+  (typeof AnalysisResultFeasibility)[keyof typeof AnalysisResultFeasibility];
+
+export const AnalysisResultFeasibility = {
+  Realistic: "Realistic",
+  Risky: "Risky",
+  Unrealistic: "Unrealistic",
+} as const;
+
+export interface AnalysisResult {
+  /** The feasibility rating of the goal */
+  feasibility: AnalysisResultFeasibility;
+  /** Reasoning behind the feasibility rating */
+  reason: string;
+  /** A suggested realistic plan */
+  plan: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+}

@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: analyze
+    description: Goal analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /analyze:
+    post:
+      operationId: analyzeGoal
+      tags: [analyze]
+      summary: Analyze a goal for feasibility
+      description: Evaluates a user-submitted goal and returns feasibility rating, reasoning, and a suggested plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeGoalBody"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +66,39 @@ components:
           type: string
       required:
         - status
-
+    AnalyzeGoalBody:
+      type: object
+      properties:
+        goal:
+          type: string
+          description: The user's goal to analyze
+        brutalHonesty:
+          type: boolean
+          description: Whether to apply brutal honesty mode
+      required:
+        - goal
+        - brutalHonesty
+    AnalysisResult:
+      type: object
+      properties:
+        feasibility:
+          type: string
+          enum: [Realistic, Risky, Unrealistic]
+          description: The feasibility rating of the goal
+        reason:
+          type: string
+          description: Reasoning behind the feasibility rating
+        plan:
+          type: string
+          description: A suggested realistic plan
+      required:
+        - feasibility
+        - reason
+        - plan
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

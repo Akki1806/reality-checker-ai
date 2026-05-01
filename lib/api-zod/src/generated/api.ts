@@ -14,3 +14,20 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Evaluates a user-submitted goal and returns feasibility rating, reasoning, and a suggested plan
+ * @summary Analyze a goal for feasibility
+ */
+export const AnalyzeGoalBody = zod.object({
+  goal: zod.string().describe("The user's goal to analyze"),
+  brutalHonesty: zod.boolean().describe("Whether to apply brutal honesty mode"),
+});
+
+export const AnalyzeGoalResponse = zod.object({
+  feasibility: zod
+    .enum(["Realistic", "Risky", "Unrealistic"])
+    .describe("The feasibility rating of the goal"),
+  reason: zod.string().describe("Reasoning behind the feasibility rating"),
+  plan: zod.string().describe("A suggested realistic plan"),
+});
