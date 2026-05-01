@@ -1,65 +1,10 @@
 import { Router } from "express";
 import { AnalyzeGoalBody } from "@workspace/api-zod";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 
 const router = Router();
 
-function analyzeGoal(goal: string, brutalHonesty: boolean) {
-  const lower = goal.toLowerCase().trim();
-
-  if (lower.length < 10) {
-    return {
-      feasibility: "Unrealistic" as const,
-      reason: brutalHonesty
-        ? "That's not even a goal. That's a word. Come back when you have a real plan."
-        : "Your goal is too vague to evaluate meaningfully. Please provide more detail.",
-      plan: "Start by writing out your goal in at least 2–3 sentences: what you want, by when, and why.",
-    };
-  }
-
-  const aggressiveKeywords = [
-    "million", "billionaire", "overnight", "passive income", "get rich",
-    "famous", "viral", "quit my job tomorrow", "retire in a year",
-  ];
-  const isAggressive = aggressiveKeywords.some((kw) => lower.includes(kw));
-
-  const shortTimeline = /in (\d+)\s*(day|week)/i.test(lower);
-
-  if (isAggressive || shortTimeline) {
-    return {
-      feasibility: "Unrealistic" as const,
-      reason: brutalHonesty
-        ? "This goal has the fingerprints of wishful thinking all over it. The timeline or the target (or both) are detached from reality."
-        : "This goal sets expectations that are very difficult to meet given typical timelines and constraints.",
-      plan: "Reframe the goal around what you can reliably do in 90 days. Build compounding momentum through smaller wins rather than betting everything on a single outcome.",
-    };
-  }
-
-  const moderateKeywords = [
-    "start a business", "launch", "lose weight", "learn", "improve",
-    "build", "create", "side project", "freelance", "promotion",
-  ];
-  const isModerate = moderateKeywords.some((kw) => lower.includes(kw));
-
-  if (isModerate) {
-    return {
-      feasibility: "Risky" as const,
-      reason: brutalHonesty
-        ? "This is achievable but most people fail at it — not because they can't, but because they underestimate the sustained effort required."
-        : "This goal is achievable but carries real risk. Success depends heavily on consistent effort and avoiding common planning traps.",
-      plan: "Break this into 3 phases over 6–12 months. Define specific, measurable checkpoints for month 1, month 3, and month 6. Identify the single most likely reason you'll quit and build a contingency for it.",
-    };
-  }
-
-  return {
-    feasibility: "Realistic" as const,
-    reason: brutalHonesty
-      ? "This looks doable — but don't mistake a reasonable goal for a guaranteed outcome. Execution is where most people stumble."
-      : "This goal is well-scoped and achievable with consistent effort and a clear plan.",
-    plan: "Define weekly milestones and schedule a dedicated review every 2 weeks. Track your progress in writing — people who document their journey are significantly more likely to follow through.",
-  };
-}
-
-router.post("/analyze", (req, res) => {
+router.post("/analyze", async (req, res) => {
   const parseResult = AnalyzeGoalBody.safeParse(req.body);
   if (!parseResult.success) {
     res.status(400).json({ error: "Invalid request body: goal and brutalHonesty are required" });
@@ -68,12 +13,79 @@ router.post("/analyze", (req, res) => {
 
   const { goal, brutalHonesty } = parseResult.data;
 
+  const systemPrompt = `You are a brutally honest but logical advisor.
+Analyze the user's goal for feasibility.
+
+Rules:
+- No motivational fluff
+- Be realistic and data-driven
+- Clearly explain if unrealistic
+- Suggest a better plan
+
+Tone:
+- If brutalHonesty = true → harsh and direct
+- If false → balanced
+
+Return ONLY valid JSON with no markdown, no code fences, no extra text:
+{
+  "feasibility": "Realistic" or "Risky" or "Unrealistic",
+  "reason": "...",
+  "plan": "..."
+}`;
+
   try {
-    const result = analyzeGoal(goal, brutalHonesty);
-    res.json(result);
+    const message = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 8192,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: `Goal: "${goal}"\nBrutal Honesty Mode: ${brutalHonesty}`,
+        },
+      ],
+    });
+
+    const block = message.content[0];
+    if (block.type !== "text") {
+      req.log.error({ block }, "Unexpected content block type from Claude");
+      res.status(500).json({ error: "Unexpected response format from AI" });
+      return;
+    }
+
+    let parsed: { feasibility: string; reason: string; plan: string };
+    try {
+      const cleaned = block.text
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```\s*$/, "")
+        .trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      req.log.error({ raw: block.text }, "Failed to parse Claude JSON response");
+      res.status(500).json({ error: "Failed to parse AI response" });
+      return;
+    }
+
+    const validFeasibility = ["Realistic", "Risky", "Unrealistic"];
+    if (
+      !parsed.feasibility ||
+      !validFeasibility.includes(parsed.feasibility) ||
+      typeof parsed.reason !== "string" ||
+      typeof parsed.plan !== "string"
+    ) {
+      req.log.error({ parsed }, "Claude returned invalid shape");
+      res.status(500).json({ error: "AI returned an unexpected response structure" });
+      return;
+    }
+
+    res.json({
+      feasibility: parsed.feasibility as "Realistic" | "Risky" | "Unrealistic",
+      reason: parsed.reason,
+      plan: parsed.plan,
+    });
   } catch (err) {
-    req.log.error({ err }, "Error analyzing goal");
-    res.status(500).json({ error: "Internal server error" });
+    req.log.error({ err }, "Error calling Claude API");
+    res.status(500).json({ error: "Failed to analyze goal. Please try again." });
   }
 });
 
