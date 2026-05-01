@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { Terminal, ShieldAlert } from "lucide-react";
+import { Terminal, ShieldAlert, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const queryClient = new QueryClient();
@@ -62,7 +63,23 @@ function ScoreDisplay({ score }: { score: number }) {
 function RealityCheckerApp() {
   const [goalText, setGoalText] = useState("");
   const [isBrutalMode, setIsBrutalMode] = useState(false);
+  const [copied, setCopied] = useState(false);
   const mutation = useAnalyzeGoal();
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    if (!mutation.data) return;
+    const { feasibility, realityScore, reason, plan } = mutation.data;
+    const text = `Reality Check AI Result:\n\nGoal: ${goalText}\n\nScore: ${realityScore}/100\nFeasibility: ${feasibility}\n\nReason:\n${reason}\n\nPlan:\n${plan}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast({ description: "Copied!" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ description: "Failed to copy. Please try again.", variant: "destructive" });
+    }
+  };
 
   const handleCheckReality = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,15 +181,31 @@ function RealityCheckerApp() {
             <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <CardTitle className="text-lg text-muted-foreground font-mono">Analysis Result</CardTitle>
-                <Badge
-                  data-testid={`badge-feasibility-${mutation.data.feasibility.toLowerCase()}`}
-                  variant="outline"
-                  className={cn("font-mono px-3 py-1 text-sm border", getFeasibilityBadgeStyle(mutation.data.feasibility))}
-                >
-                  {mutation.data.feasibility.toUpperCase()}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    data-testid={`badge-feasibility-${mutation.data.feasibility.toLowerCase()}`}
+                    variant="outline"
+                    className={cn("font-mono px-3 py-1 text-sm border", getFeasibilityBadgeStyle(mutation.data.feasibility))}
+                  >
+                    {mutation.data.feasibility.toUpperCase()}
+                  </Badge>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="button-share-result"
+                    onClick={handleShare}
+                    className="h-8 px-3 text-xs font-mono gap-1.5 border-border text-muted-foreground hover:text-foreground"
+                  >
+                    {copied ? (
+                      <><Check className="w-3.5 h-3.5 text-emerald-400" />Copied!</>
+                    ) : (
+                      <><Copy className="w-3.5 h-3.5" />Share Result</>
+                    )}
+                  </Button>
+                </div>
               </div>
               <CardDescription className="sr-only">Analysis details</CardDescription>
             </CardHeader>
