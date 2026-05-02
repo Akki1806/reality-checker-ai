@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,37 +7,58 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { Terminal, ShieldAlert, Copy, Check, Briefcase, DollarSign, Dumbbell, TrendingUp, Sparkles } from "lucide-react";
+import {
+  Terminal,
+  ShieldAlert,
+  Copy,
+  Check,
+  Briefcase,
+  DollarSign,
+  Dumbbell,
+  TrendingUp,
+  Sparkles,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const queryClient = new QueryClient();
 
 function getScoreColors(score: number) {
-  if (score <= 30) return {
-    text: "text-red-400",
-    bg: "bg-red-500",
-    glow: "rgba(239,68,68,0.35)",
-    cardGlow: "0 0 40px -8px rgba(239,68,68,0.2), 0 0 0 1px rgba(239,68,68,0.12)",
-    barFrom: "#ef4444",
-    barTo: "#dc2626",
-  };
-  if (score <= 60) return {
-    text: "text-amber-400",
-    bg: "bg-amber-400",
-    glow: "rgba(251,191,36,0.35)",
-    cardGlow: "0 0 40px -8px rgba(251,191,36,0.2), 0 0 0 1px rgba(251,191,36,0.12)",
-    barFrom: "#f59e0b",
-    barTo: "#d97706",
-  };
+  if (score <= 30)
+    return {
+      text: "text-red-400",
+      bg: "bg-red-500",
+      glow: "rgba(239,68,68,0.35)",
+      cardGlow:
+        "0 0 40px -8px rgba(239,68,68,0.2), 0 0 0 1px rgba(239,68,68,0.12)",
+      barFrom: "#ef4444",
+      barTo: "#dc2626",
+    };
+  if (score <= 60)
+    return {
+      text: "text-amber-400",
+      bg: "bg-amber-400",
+      glow: "rgba(251,191,36,0.35)",
+      cardGlow:
+        "0 0 40px -8px rgba(251,191,36,0.2), 0 0 0 1px rgba(251,191,36,0.12)",
+      barFrom: "#f59e0b",
+      barTo: "#d97706",
+    };
   return {
     text: "text-emerald-400",
     bg: "bg-emerald-500",
     glow: "rgba(52,211,153,0.35)",
-    cardGlow: "0 0 40px -8px rgba(52,211,153,0.2), 0 0 0 1px rgba(52,211,153,0.12)",
+    cardGlow:
+      "0 0 40px -8px rgba(52,211,153,0.2), 0 0 0 1px rgba(52,211,153,0.12)",
     barFrom: "#34d399",
     barTo: "#10b981",
   };
@@ -45,32 +66,55 @@ function getScoreColors(score: number) {
 
 function getFeasibilityBadgeStyle(feasibility: string) {
   switch (feasibility) {
-    case "Realistic":   return "bg-emerald-500/10 text-emerald-400 border-emerald-500/25";
-    case "Risky":       return "bg-amber-500/10 text-amber-400 border-amber-500/25";
-    case "Unrealistic": return "bg-red-500/10 text-red-400 border-red-500/25";
-    default:            return "bg-muted text-muted-foreground border-border";
+    case "Realistic":
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/25";
+    case "Risky":
+      return "bg-amber-500/10 text-amber-400 border-amber-500/25";
+    case "Unrealistic":
+      return "bg-red-500/10 text-red-400 border-red-500/25";
+    default:
+      return "bg-muted text-muted-foreground border-border";
   }
 }
 
 function getCategoryIcon(category: string) {
   switch (category) {
-    case "money":    return <DollarSign className="w-3 h-3" />;
-    case "fitness":  return <Dumbbell className="w-3 h-3" />;
-    case "career":   return <Briefcase className="w-3 h-3" />;
-    case "business": return <TrendingUp className="w-3 h-3" />;
-    default:         return <Sparkles className="w-3 h-3" />;
+    case "money":
+      return <DollarSign className="w-3 h-3" />;
+    case "fitness":
+      return <Dumbbell className="w-3 h-3" />;
+    case "career":
+      return <Briefcase className="w-3 h-3" />;
+    case "business":
+      return <TrendingUp className="w-3 h-3" />;
+    default:
+      return <Sparkles className="w-3 h-3" />;
   }
 }
 
-function ScoreDisplay({ score, scoreReason }: { score: number; scoreReason: string }) {
+function ScoreDisplay({
+  score,
+  scoreReason,
+}: {
+  score: number;
+  scoreReason: string;
+}) {
   const colors = getScoreColors(score);
 
   return (
-    <div className="flex flex-col items-center gap-4 py-6" data-testid="display-reality-score">
+    <div
+      className="flex flex-col items-center gap-4 py-6"
+      data-testid="display-reality-score"
+    >
       <div className="flex flex-col items-center gap-1">
         <div
-          className={cn("text-[6rem] leading-none font-bold tabular-nums tracking-tighter font-mono select-none", colors.text)}
-          style={{ textShadow: `0 0 60px ${colors.glow}, 0 0 20px ${colors.glow}` }}
+          className={cn(
+            "text-[6rem] leading-none font-bold tabular-nums tracking-tighter font-mono select-none",
+            colors.text,
+          )}
+          style={{
+            textShadow: `0 0 60px ${colors.glow}, 0 0 20px ${colors.glow}`,
+          }}
         >
           {score}
         </div>
@@ -110,12 +154,14 @@ function RealityCheckerApp() {
   const [goalText, setGoalText] = useState("");
   const [isBrutalMode, setIsBrutalMode] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
   const mutation = useAnalyzeGoal();
   const { toast } = useToast();
 
   const handleShare = async () => {
     if (!mutation.data) return;
-    const { feasibility, realityScore, scoreReason, reason, plan } = mutation.data;
+    const { feasibility, realityScore, scoreReason, reason, plan } =
+      mutation.data;
     const reasonText = Array.isArray(reason)
       ? reason.map((r) => `• ${r}`).join("\n")
       : reason;
@@ -129,7 +175,10 @@ function RealityCheckerApp() {
       toast({ description: "Copied!" });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ description: "Failed to copy. Please try again.", variant: "destructive" });
+      toast({
+        description: "Failed to copy. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -139,11 +188,44 @@ function RealityCheckerApp() {
     mutation.mutate({ data: { goal: goalText, brutalHonesty: isBrutalMode } });
   };
 
-  const resultColors = mutation.data ? getScoreColors(mutation.data.realityScore) : null;
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("history") || "[]");
+    setHistory(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!mutation.data) return;
+
+    const newItem = {
+      goal: goalText,
+      result: mutation.data,
+      time: new Date().toISOString(),
+    };
+
+    const existing = JSON.parse(localStorage.getItem("history") || "[]");
+
+    // remove duplicate goal
+    const filtered = existing.filter((h: any) => h.goal !== goalText);
+
+    const updated = [
+      {
+        goal: goalText,
+        result: mutation.data,
+        time: new Date().toISOString(),
+      },
+      ...filtered,
+    ].slice(0, 5);
+
+    localStorage.setItem("history", JSON.stringify(updated));
+    setHistory(updated);
+  }, [mutation.data]);
+
+  const resultColors = mutation.data
+    ? getScoreColors(mutation.data.realityScore)
+    : null;
 
   return (
     <div className="relative min-h-[100dvh] w-full flex items-center justify-center p-4 text-foreground font-sans dark selection:bg-primary/30 overflow-hidden">
-
       {/* Gradient background */}
       <div className="absolute inset-0 bg-background" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(200,120,40,0.08),transparent)]" />
@@ -151,7 +233,6 @@ function RealityCheckerApp() {
       <div className="absolute inset-0 opacity-[0.025] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJub2lzZSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuNjUiIG51bU9jdGF2ZXM9IjMiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsdGVyPSJ1cmwoI25vaXNlKSIgb3BhY2l0eT0iMSIvPjwvc3ZnPg==')]" />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col gap-8 py-12">
-
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-3 px-4">
           <div className="relative h-14 w-14 flex items-center justify-center mb-1 shrink-0">
@@ -164,7 +245,8 @@ function RealityCheckerApp() {
             Reality Checker AI
           </h1>
           <p className="text-sm text-muted-foreground/80 max-w-sm mx-auto leading-relaxed">
-            A clear-eyed advisor for goal-setters. Evaluated with objective precision.
+            A clear-eyed advisor for goal-setters. Evaluated with objective
+            precision.
           </p>
         </div>
 
@@ -173,7 +255,10 @@ function RealityCheckerApp() {
           <CardContent className="pt-6">
             <form onSubmit={handleCheckReality} className="flex flex-col gap-5">
               <div className="space-y-2">
-                <Label htmlFor="goal-input" className="text-xs font-mono uppercase tracking-widest text-muted-foreground/70">
+                <Label
+                  htmlFor="goal-input"
+                  className="text-xs font-mono uppercase tracking-widest text-muted-foreground/70"
+                >
                   Your Target Goal
                 </Label>
                 <Input
@@ -191,7 +276,9 @@ function RealityCheckerApp() {
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     Brutal Honesty Mode
-                    {isBrutalMode && <ShieldAlert className="w-3.5 h-3.5 text-primary" />}
+                    {isBrutalMode && (
+                      <ShieldAlert className="w-3.5 h-3.5 text-primary" />
+                    )}
                   </Label>
                   <p className="text-xs text-muted-foreground/60">
                     Removes all sugarcoating. Not for the faint of heart.
@@ -232,7 +319,8 @@ function RealityCheckerApp() {
             <div>
               <p className="font-semibold mb-0.5">Analysis Failed</p>
               <p className="text-destructive/70 text-xs">
-                {(mutation.error as { error?: string } | null)?.error || "An unexpected error occurred. Please try again."}
+                {(mutation.error as { error?: string } | null)?.error ||
+                  "An unexpected error occurred. Please try again."}
               </p>
             </div>
           </div>
@@ -243,12 +331,18 @@ function RealityCheckerApp() {
           <Card
             data-testid="card-result"
             className="border-white/8 overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700 bg-card/60 backdrop-blur-md"
-            style={{ boxShadow: resultColors ? resultColors.cardGlow : undefined }}
+            style={{
+              boxShadow: resultColors ? resultColors.cardGlow : undefined,
+            }}
           >
             {/* Score-colored top accent bar */}
             <div
               className="h-px w-full"
-              style={{ background: resultColors ? `linear-gradient(90deg, transparent, ${resultColors.barFrom}80, transparent)` : undefined }}
+              style={{
+                background: resultColors
+                  ? `linear-gradient(90deg, transparent, ${resultColors.barFrom}80, transparent)`
+                  : undefined,
+              }}
             />
 
             <CardHeader className="pb-2 pt-5">
@@ -270,7 +364,10 @@ function RealityCheckerApp() {
                   <Badge
                     data-testid={`badge-feasibility-${mutation.data.feasibility.toLowerCase()}`}
                     variant="outline"
-                    className={cn("font-mono px-3 py-1 text-xs border tracking-wide", getFeasibilityBadgeStyle(mutation.data.feasibility))}
+                    className={cn(
+                      "font-mono px-3 py-1 text-xs border tracking-wide",
+                      getFeasibilityBadgeStyle(mutation.data.feasibility),
+                    )}
                   >
                     {mutation.data.feasibility.toUpperCase()}
                   </Badge>
@@ -283,54 +380,82 @@ function RealityCheckerApp() {
                     className="h-7 px-3 text-xs font-mono gap-1.5 border-white/10 bg-white/4 text-muted-foreground hover:text-foreground hover:bg-white/8 transition-all"
                   >
                     {copied ? (
-                      <><Check className="w-3 h-3 text-emerald-400" />Copied!</>
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        Copied!
+                      </>
                     ) : (
-                      <><Copy className="w-3 h-3" />Share</>
+                      <>
+                        <Copy className="w-3 h-3" />
+                        Share
+                      </>
                     )}
                   </Button>
                 </div>
               </div>
-              <CardDescription className="sr-only">Analysis details</CardDescription>
+              <CardDescription className="sr-only">
+                Analysis details
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-5 pb-6">
-
               {/* Score */}
               <div
                 className="rounded-xl border border-white/5 bg-white/[0.02]"
-                style={{ boxShadow: resultColors ? `inset 0 0 60px -20px ${resultColors.glow}` : undefined }}
+                style={{
+                  boxShadow: resultColors
+                    ? `inset 0 0 60px -20px ${resultColors.glow}`
+                    : undefined,
+                }}
               >
-                <ScoreDisplay score={mutation.data.realityScore} scoreReason={mutation.data.scoreReason} />
+                <ScoreDisplay
+                  score={mutation.data.realityScore}
+                  scoreReason={mutation.data.scoreReason}
+                />
               </div>
 
               {/* Reasoning */}
-              <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150" data-testid="section-reasoning">
+              <div
+                className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150"
+                data-testid="section-reasoning"
+              >
                 <h3 className="text-[0.65rem] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2 pl-1">
                   <span className="w-1 h-1 rounded-full bg-primary/40" />
                   Key Factors
                 </h3>
                 <div className="rounded-xl bg-white/[0.03] border border-white/5 overflow-hidden">
-                  {(Array.isArray(mutation.data.reason) ? mutation.data.reason : [mutation.data.reason as unknown as string]).map((point, i) => (
+                  {(Array.isArray(mutation.data.reason)
+                    ? mutation.data.reason
+                    : [mutation.data.reason as unknown as string]
+                  ).map((point, i) => (
                     <div
                       key={i}
                       data-testid={`reason-point-${i}`}
                       className="flex items-start gap-3 px-4 py-3 border-b border-white/4 last:border-0"
                     >
                       <span className="shrink-0 mt-[0.4rem] w-1.5 h-1.5 rounded-full bg-primary/50" />
-                      <span className="font-mono text-sm text-foreground/80 leading-relaxed">{point}</span>
+                      <span className="font-mono text-sm text-foreground/80 leading-relaxed">
+                        {point}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Plan */}
-              <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300" data-testid="section-plan">
+              <div
+                className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300"
+                data-testid="section-plan"
+              >
                 <h3 className="text-[0.65rem] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 flex items-center gap-2 pl-1">
                   <span className="w-1 h-1 rounded-full bg-primary/40" />
                   Action Plan
                 </h3>
                 <div className="rounded-xl bg-white/[0.03] border border-white/5 overflow-hidden">
-                  {(Array.isArray(mutation.data.plan) ? mutation.data.plan : [mutation.data.plan as unknown as string]).map((step, i) => (
+                  {(Array.isArray(mutation.data.plan)
+                    ? mutation.data.plan
+                    : [mutation.data.plan as unknown as string]
+                  ).map((step, i) => (
                     <div
                       key={i}
                       data-testid={`plan-step-${i}`}
@@ -339,16 +464,71 @@ function RealityCheckerApp() {
                       <span className="shrink-0 w-5 h-5 rounded-md bg-primary/15 text-primary text-[0.65rem] font-mono font-bold flex items-center justify-center mt-0.5">
                         {i + 1}
                       </span>
-                      <span className="font-mono text-sm text-foreground/80 leading-relaxed">{step}</span>
+                      <span className="font-mono text-sm text-foreground/80 leading-relaxed">
+                        {step}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
-
             </CardContent>
           </Card>
         )}
 
+        {history.length > 0 && (
+          <Card className="border-white/8 bg-card/50 backdrop-blur-md">
+            <CardHeader>
+              <CardTitle className="text-sm font-mono uppercase tracking-widest text-muted-foreground/60">
+                Recent Checks
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("history");
+                    setHistory([]);
+                  }}
+                  className="text-xs text-red-400 hover:text-red-300"
+                >
+                  Clear History
+                </button>
+              </div>
+
+              {history.map((item, i) => (
+                <div
+                  key={i}
+                  onClick={() => {
+                    setGoalText(item.goal);
+
+                    mutation.mutate({
+                      data: {
+                        goal: item.goal,
+                        brutalHonesty: isBrutalMode,
+                      },
+                    });
+
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="p-3 rounded-lg border border-white/5 bg-white/[0.03] cursor-pointer hover:bg-white/[0.06] transition"
+                >
+                  <div className="text-sm font-mono text-foreground/80">
+                    {item.goal}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Score: {item.result.realityScore} —{" "}
+                    {item.result.feasibility}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1 opacity-60">
+                    Click to re-run
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
